@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +13,15 @@ import {
   BarChart3, 
   Settings,
   LogOut,
-  Crown
+  Crown,
+  CreditCard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function Navigation() {
   const { state, dispatch } = useApp();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { currentUser } = state;
 
   if (!currentUser) return null;
@@ -31,6 +34,10 @@ export function Navigation() {
     });
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   const unreadMessages = state.messages.filter(
     msg => msg.toUserId === currentUser.id && !msg.read
   ).length;
@@ -40,7 +47,7 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => handleNavigation('/')}>
               <ShoppingBag className="h-8 w-8 text-shophood-600" />
               <span className="text-xl font-bold bg-gradient-to-r from-shophood-600 to-shophood-800 bg-clip-text text-transparent">
                 ShopHood
@@ -58,7 +65,11 @@ export function Navigation() {
 
             {currentUser.role === 'business' && (
               <div className="hidden md:flex items-center space-x-4 ml-8">
-                <Button variant="ghost" className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center space-x-2"
+                  onClick={() => handleNavigation('/')}
+                >
                   <Store className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Button>
@@ -68,6 +79,14 @@ export function Navigation() {
                     <span>Analytics</span>
                   </Button>
                 )}
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center space-x-2"
+                  onClick={() => handleNavigation('/pricing')}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Pricing</span>
+                </Button>
               </div>
             )}
           </div>
@@ -105,7 +124,7 @@ export function Navigation() {
               
               <Avatar className="h-8 w-8">
                 <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                <AvatarFallback>{currentUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                <AvatarFallback>{currentUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallable>
               </Avatar>
             </div>
 

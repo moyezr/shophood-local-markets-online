@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,9 +21,14 @@ import {
   Users,
   ShoppingBag,
   MessageCircle,
-  Target
+  Target,
+  Eye,
+  Clock,
+  Award,
+  BarChart3
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PremiumFeatureBlock } from './PremiumFeatureBlock';
 
 const BUSINESS_TYPES = [
   'Food & Beverage',
@@ -116,9 +120,40 @@ export function BusinessDashboard() {
 
     dispatch({ type: 'ADD_PRODUCT', payload: newProduct });
     setShowProductForm(false);
+    setEditingProduct(null);
     toast({
       title: 'Product added!',
       description: 'Your product is now available to customers.',
+    });
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
+  const handleUpdateProduct = (productData: Partial<Product>) => {
+    if (!editingProduct) return;
+
+    const updatedProduct: Product = {
+      ...editingProduct,
+      ...productData
+    };
+
+    dispatch({ type: 'UPDATE_PRODUCT', payload: updatedProduct });
+    setShowProductForm(false);
+    setEditingProduct(null);
+    toast({
+      title: 'Product updated!',
+      description: 'Your product changes have been saved.',
+    });
+  };
+
+  const handleDeleteProduct = (productId: string) => {
+    dispatch({ type: 'DELETE_PRODUCT', payload: productId });
+    toast({
+      title: 'Product deleted',
+      description: 'The product has been removed from your listings.',
     });
   };
 
@@ -192,6 +227,9 @@ export function BusinessDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{businessAds.filter(ad => ad.active).length}</div>
+            <p className="text-xs text-muted-foreground">
+              ${businessAds.reduce((sum, ad) => sum + ad.bidAmount, 0)} total bid
+            </p>
           </CardContent>
         </Card>
 
@@ -228,10 +266,145 @@ export function BusinessDashboard() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="advertising">Advertising</TabsTrigger>
-          {currentUser.subscriptionPlan === 'premium' && (
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          )}
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Business Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Store className="h-5 w-5" />
+                  <span>Business Summary</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Type:</span>
+                  <Badge variant="outline">{businessProfile.type}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Location:</span>
+                  <span className="text-sm font-medium">{businessProfile.location}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Contact:</span>
+                  <span className="text-sm font-medium">{businessProfile.contactPhone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="h-5 w-5" />
+                  <span>Recent Activity</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Profile created successfully</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>{businessProducts.length} products added</span>
+                  </div>
+                  {businessAds.length > 0 && (
+                    <div className="flex items-center space-x-2 text-sm">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span>Advertisement campaign active</span>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-2 text-sm">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Profile views: 247 this month</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  onClick={() => setShowProductForm(true)}
+                  className="w-full justify-start"
+                  disabled={currentUser.subscriptionPlan === 'free' && businessProducts.length >= 3}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+                <Button 
+                  onClick={() => handleCreateAd({ type: 'sponsored', bidAmount: 25 })}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  <Target className="h-4 w-4 mr-2" />
+                  Create Ad
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  View Messages
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Performance Overview */}
+          {currentUser.subscriptionPlan === 'premium' ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BarChart3 className="h-5 w-5" />
+                  <span>Performance Overview</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">1,247</div>
+                    <div className="text-sm text-gray-600">Profile Views</div>
+                    <div className="text-xs text-green-600">+12% this week</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">89</div>
+                    <div className="text-sm text-gray-600">Customer Inquiries</div>
+                    <div className="text-xs text-green-600">+8% this week</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">23</div>
+                    <div className="text-sm text-gray-600">Products Favorited</div>
+                    <div className="text-xs text-green-600">+15% this week</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">7.1%</div>
+                    <div className="text-sm text-gray-600">Conversion Rate</div>
+                    <div className="text-xs text-green-600">+2.1% this week</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <PremiumFeatureBlock
+              title="Performance Overview"
+              description="Track your business performance, view detailed analytics, and monitor conversion rates with Premium."
+            />
+          )}
+        </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
           <div className="flex justify-between items-center">
@@ -271,11 +444,21 @@ export function BusinessDashboard() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => handleEditProduct(product)}
+                    >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -285,20 +468,10 @@ export function BusinessDashboard() {
           </div>
 
           {currentUser.subscriptionPlan === 'free' && businessProducts.length >= 3 && (
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <Crown className="h-8 w-8 text-yellow-600" />
-                  <div>
-                    <h3 className="font-medium text-yellow-800">Upgrade to add more products</h3>
-                    <p className="text-sm text-yellow-700">Free accounts are limited to 3 products. Upgrade to Premium for unlimited listings.</p>
-                  </div>
-                  <Button onClick={handleUpgradeToPremium} className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
-                    Upgrade Now
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <PremiumFeatureBlock
+              title="Upgrade to add more products"
+              description="Free accounts are limited to 3 products. Upgrade to Premium for unlimited listings and better visibility."
+            />
           )}
         </TabsContent>
 
@@ -352,61 +525,185 @@ export function BusinessDashboard() {
           </div>
         </TabsContent>
 
-        {currentUser.subscriptionPlan === 'premium' && (
-          <TabsContent value="analytics" className="space-y-4">
-            <h2 className="text-xl font-semibold">Analytics Dashboard</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-green-600 mb-2">$2,547</div>
-                  <p className="text-sm text-gray-600">This month</p>
-                  <div className="mt-4 h-32 bg-gradient-to-r from-green-100 to-green-200 rounded flex items-end justify-center">
-                    <div className="text-sm text-green-700">Sample chart data</div>
-                  </div>
-                </CardContent>
-              </Card>
+        <TabsContent value="analytics" className="space-y-4">
+          {currentUser.subscriptionPlan === 'premium' ? (
+            <>
+              <h2 className="text-xl font-semibold">Analytics Dashboard</h2>
+              
+              {/* Enhanced Analytics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">$2,547</div>
+                    <p className="text-xs text-green-600">+12.5% from last month</p>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Insights</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span>Total Views</span>
-                      <span className="font-medium">1,247</span>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">1,247</div>
+                    <p className="text-xs text-green-600">+8.2% from last week</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Customer Engagement</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">89</div>
+                    <p className="text-xs text-blue-600">Messages received</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">7.1%</div>
+                    <p className="text-xs text-green-600">+2.1% improvement</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Detailed Analytics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {businessProducts.slice(0, 3).map((product, index) => (
+                        <div key={product.id} className="flex justify-between items-center">
+                          <span className="text-sm">{product.name}</span>
+                          <div className="text-right">
+                            <div className="font-medium">${(product.price * (5 - index)).toFixed(2)}</div>
+                            <div className="text-xs text-gray-500">{5 - index} sales</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex justify-between">
-                      <span>Messages Received</span>
-                      <span className="font-medium">89</span>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Customer Demographics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Age 25-34</span>
+                        <span className="font-medium">42%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Age 35-44</span>
+                        <span className="font-medium">28%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Age 18-24</span>
+                        <span className="font-medium">20%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Age 45+</span>
+                        <span className="font-medium">10%</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Conversion Rate</span>
-                      <span className="font-medium">7.1%</span>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Popular Products</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {businessProducts.map((product, index) => (
+                        <div key={product.id} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-shophood-100 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-shophood-600">{index + 1}</span>
+                            </div>
+                            <span className="text-sm">{product.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-medium">{15 - index * 3} views</div>
+                            <div className="text-xs text-gray-500">{5 - index} inquiries</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="text-sm">
+                          <span className="font-medium">New customer inquiry</span>
+                          <div className="text-gray-500">2 hours ago</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="text-sm">
+                          <span className="font-medium">Product view spike</span>
+                          <div className="text-gray-500">4 hours ago</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <div className="text-sm">
+                          <span className="font-medium">Ad campaign performance</span>
+                          <div className="text-gray-500">1 day ago</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <PremiumFeatureBlock
+              title="Advanced Analytics Dashboard"
+              description="Get detailed insights into your business performance, customer demographics, revenue analytics, and more with Premium."
+            />
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Product Form Modal */}
       {showProductForm && (
         <ProductForm 
-          onSubmit={handleCreateProduct}
-          onCancel={() => setShowProductForm(false)}
+          onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
+          onCancel={() => {
+            setShowProductForm(false);
+            setEditingProduct(null);
+          }}
+          initialData={editingProduct || undefined}
         />
       )}
     </div>
   );
 }
 
-// Separate components for forms
 function BusinessProfileForm({ onSubmit }: { onSubmit: (data: Partial<BusinessProfile>) => void }) {
   const [formData, setFormData] = useState({
     name: '',

@@ -9,6 +9,7 @@ import { LoginPage } from "./components/LoginPage";
 import { Navigation } from "./components/Navigation";
 import { ConsumerHome } from "./components/ConsumerHome";
 import { BusinessDashboard } from "./components/BusinessDashboard";
+import { PricingPage } from "./components/PricingPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -25,11 +26,17 @@ function AppContent() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <main>
-        {state.currentUser.role === 'consumer' ? (
-          <ConsumerHome />
-        ) : (
-          <BusinessDashboard />
-        )}
+        <Routes>
+          <Route path="/" element={
+            state.currentUser.role === 'consumer' ? (
+              <ConsumerHome />
+            ) : (
+              <BusinessDashboard />
+            )
+          } />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </main>
     </div>
   );
@@ -42,11 +49,7 @@ const App = () => (
       <Sonner />
       <AppProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<AppContent />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppContent />
         </BrowserRouter>
       </AppProvider>
     </TooltipProvider>
