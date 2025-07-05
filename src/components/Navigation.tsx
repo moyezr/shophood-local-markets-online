@@ -124,7 +124,7 @@ export function Navigation() {
               
               <Avatar className="h-8 w-8">
                 <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                <AvatarFallback>{currentUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallable>
+                <AvatarFallback>{currentUser.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
               </Avatar>
             </div>
 
