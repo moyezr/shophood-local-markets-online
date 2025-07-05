@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useApp } from '../contexts/AppContext';
 import { BusinessProfile, Product, AdSlot } from '../types';
 import { 
@@ -29,6 +30,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PremiumFeatureBlock } from './PremiumFeatureBlock';
+import { AdCreationDialog } from './AdCreationDialog';
+import { useNavigate } from 'react-router-dom';
 
 const BUSINESS_TYPES = [
   'Food & Beverage',
@@ -55,9 +58,12 @@ const PRODUCT_CATEGORIES = [
 export function BusinessDashboard() {
   const { state, dispatch } = useApp();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showProductForm, setShowProductForm] = useState(false);
+  const [showAdDialog, setShowAdDialog] = useState(false);
+  const [editingAd, setEditingAd] = useState<AdSlot | null>(null);
 
   const currentUser = state.currentUser!;
   const businessProfile = state.businessProfiles.find(bp => bp.ownerUserId === currentUser.id);
@@ -174,6 +180,45 @@ export function BusinessDashboard() {
     toast({
       title: 'Advertisement created!',
       description: 'Your ad is now active and will appear in search results.',
+    });
+  };
+
+  const handleEditAd = (ad: AdSlot) => {
+    setEditingAd(ad);
+    setShowAdDialog(true);
+  };
+
+  const handleUpdateAd = (adData: Partial<AdSlot>) => {
+    if (!editingAd) return;
+
+    const updatedAd: AdSlot = {
+      ...editingAd,
+      ...adData
+    };
+
+    dispatch({ type: 'UPDATE_AD_SLOT', payload: updatedAd });
+    setEditingAd(null);
+    toast({
+      title: 'Advertisement updated!',
+      description: 'Your ad changes have been saved.',
+    });
+  };
+
+  const handleDeleteAd = (adId: string) => {
+    const updatedAds = state.adSlots.filter(ad => ad.id !== adId);
+    dispatch({ type: 'LOAD_STATE', payload: { ...state, adSlots: updatedAds } });
+    toast({
+      title: 'Advertisement deleted',
+      description: 'The advertisement has been removed.',
+    });
+  };
+
+  const handleToggleAdStatus = (ad: AdSlot) => {
+    const updatedAd = { ...ad, active: !ad.active };
+    dispatch({ type: 'UPDATE_AD_SLOT', payload: updatedAd });
+    toast({
+      title: ad.active ? 'Advertisement paused' : 'Advertisement activated',
+      description: `Your ad is now ${ad.active ? 'paused' : 'active'}.`,
     });
   };
 
@@ -346,7 +391,7 @@ export function BusinessDashboard() {
                   Add Product
                 </Button>
                 <Button 
-                  onClick={() => handleCreateAd({ type: 'sponsored', bidAmount: 25 })}
+                  onClick={() => setShowAdDialog(true)}
                   variant="outline"
                   className="w-full justify-start"
                 >
@@ -356,6 +401,7 @@ export function BusinessDashboard() {
                 <Button 
                   variant="outline"
                   className="w-full justify-start"
+                  onClick={() => navigate('/messages')}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   View Messages
@@ -479,7 +525,7 @@ export function BusinessDashboard() {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Advertising Campaigns</h2>
             <Button 
-              onClick={() => handleCreateAd({ type: 'sponsored', bidAmount: 25 })}
+              onClick={() => setShowAdDialog(true)}
               className="bg-gradient-to-r from-shophood-500 to-shophood-600 hover:from-shophood-600 hover:to-shophood-700"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -511,13 +557,50 @@ export function BusinessDashboard() {
                     <span className="font-medium">${ad.bidAmount}</span>
                   </div>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => handleEditAd(ad)}
+                    >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleToggleAdStatus(ad)}
+                    >
                       {ad.active ? 'Pause' : 'Activate'}
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Advertisement</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this advertisement? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteAd(ad.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardContent>
               </Card>
@@ -700,6 +783,17 @@ export function BusinessDashboard() {
           initialData={editingProduct || undefined}
         />
       )}
+
+      {/* Ad Creation/Edit Dialog */}
+      <AdCreationDialog
+        open={showAdDialog}
+        onClose={() => {
+          setShowAdDialog(false);
+          setEditingAd(null);
+        }}
+        onSubmit={editingAd ? handleUpdateAd : handleCreateAd}
+        initialData={editingAd || undefined}
+      />
     </div>
   );
 }

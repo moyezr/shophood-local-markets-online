@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ export function Navigation() {
   const { state, dispatch } = useApp();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = state;
 
   if (!currentUser) return null;
@@ -42,6 +43,8 @@ export function Navigation() {
     msg => msg.toUserId === currentUser.id && !msg.read
   ).length;
 
+  const isCurrentPath = (path: string) => location.pathname === path;
+
   return (
     <nav className="bg-white shadow-lg border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,7 +59,11 @@ export function Navigation() {
             
             {currentUser.role === 'consumer' && (
               <div className="hidden md:flex items-center space-x-4 ml-8">
-                <Button variant="ghost" className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center space-x-2 ${isCurrentPath('/') ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={() => handleNavigation('/')}
+                >
                   <Search className="h-4 w-4" />
                   <span>Discover</span>
                 </Button>
@@ -67,21 +74,25 @@ export function Navigation() {
               <div className="hidden md:flex items-center space-x-4 ml-8">
                 <Button 
                   variant="ghost" 
-                  className="flex items-center space-x-2"
+                  className={`flex items-center space-x-2 ${isCurrentPath('/') ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={() => handleNavigation('/')}
                 >
                   <Store className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Button>
                 {currentUser.subscriptionPlan === 'premium' && (
-                  <Button variant="ghost" className="flex items-center space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    className={`flex items-center space-x-2 ${isCurrentPath('/analytics') ? 'bg-accent text-accent-foreground' : ''}`}
+                    onClick={() => handleNavigation('/analytics')}
+                  >
                     <BarChart3 className="h-4 w-4" />
                     <span>Analytics</span>
                   </Button>
                 )}
                 <Button 
                   variant="ghost" 
-                  className="flex items-center space-x-2"
+                  className={`flex items-center space-x-2 ${isCurrentPath('/pricing') ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={() => handleNavigation('/pricing')}
                 >
                   <CreditCard className="h-4 w-4" />
@@ -92,7 +103,12 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="relative">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`relative ${isCurrentPath('/messages') ? 'bg-accent text-accent-foreground' : ''}`}
+              onClick={() => handleNavigation('/messages')}
+            >
               <MessageCircle className="h-5 w-5" />
               {unreadMessages > 0 && (
                 <Badge 

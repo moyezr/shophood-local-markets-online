@@ -10,6 +10,8 @@ import { Navigation } from "./components/Navigation";
 import { ConsumerHome } from "./components/ConsumerHome";
 import { BusinessDashboard } from "./components/BusinessDashboard";
 import { PricingPage } from "./components/PricingPage";
+import { MessagesPage } from "./components/MessagesPage";
+import { AnalyticsPage } from "./components/AnalyticsPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +37,8 @@ function AppContent() {
             )
           } />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
