@@ -44,7 +44,7 @@ const CATEGORIES = [
 ];
 
 export function ConsumerHome() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<SearchFilters>({
@@ -183,9 +183,33 @@ export function ConsumerHome() {
   };
 
   const handleContactBusiness = (business: BusinessProfile) => {
+    // Find the business owner user
+    const businessOwner = state.users.find(user => user.id === business.ownerUserId);
+    if (!businessOwner) return;
+
+    // Create an initial message if no conversation exists
+    const existingMessages = state.messages.filter(
+      msg => (msg.fromUserId === state.currentUser!.id && msg.toUserId === businessOwner.id) ||
+             (msg.fromUserId === businessOwner.id && msg.toUserId === state.currentUser!.id)
+    );
+
+    if (existingMessages.length === 0) {
+      const newMessage = {
+        id: Date.now().toString(),
+        fromUserId: state.currentUser!.id,
+        toUserId: businessOwner.id,
+        content: `Hi! I'm interested in your products at ${business.name}. Could you tell me more?`,
+        timestamp: new Date(),
+        read: false
+      };
+      
+      // Add the message using dispatch
+      dispatch({ type: 'ADD_MESSAGE', payload: newMessage });
+    }
+
     toast({
-      title: 'Contact initiated',
-      description: `You can now message ${business.name}`,
+      title: 'Message sent!',
+      description: `Started conversation with ${business.name}. Check your messages.`,
     });
   };
 
