@@ -193,7 +193,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         description: 'Traditional sourdough with 24-hour fermentation process.',
         price: 8.99,
         availability: true,
-        category: 'Bakery',
+        category: 'Food & Beverage',
         image: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=300'
       },
       {
@@ -203,7 +203,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         description: 'Buttery croissants filled with Belgian dark chocolate.',
         price: 3.50,
         availability: true,
-        category: 'Bakery',
+        category: 'Food & Beverage',
         image: 'https://images.unsplash.com/photo-1555507036-ab794f27d0ac?w=300'
       },
       {
@@ -225,6 +225,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         availability: true,
         category: 'Electronics',
         image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'
+      },
+      {
+        id: 'p5',
+        businessId: 'bp1',
+        name: 'Fresh Coffee Blend',
+        description: 'Locally roasted premium coffee beans.',
+        price: 12.99,
+        availability: true,
+        category: 'Food & Beverage',
+        image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=300'
+      },
+      {
+        id: 'p6',
+        businessId: 'bp2',
+        name: 'Bluetooth Speaker',
+        description: 'Portable wireless speaker with crystal clear sound.',
+        price: 89.99,
+        availability: true,
+        category: 'Electronics',
+        image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=300'
       }
     ];
 
@@ -240,11 +260,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     ];
 
+    const sampleMessages: Message[] = [
+      {
+        id: 'm1',
+        fromUserId: '1',
+        toUserId: '2',
+        content: 'Hi! Do you have any fresh croissants available today?',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        read: false
+      },
+      {
+        id: 'm2',
+        fromUserId: '2',
+        toUserId: '1',
+        content: 'Yes! We just baked a fresh batch this morning. They\'re still warm!',
+        timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000), // 1.5 hours ago
+        read: true
+      },
+      {
+        id: 'm3',
+        fromUserId: '1',
+        toUserId: '2',
+        content: 'Perfect! I\'ll stop by in 30 minutes. Can you set aside 4 chocolate croissants?',
+        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        read: false
+      },
+      {
+        id: 'm4',
+        fromUserId: '3',
+        toUserId: '1',
+        content: 'Thank you for your interest in our wireless earbuds! They\'re currently 20% off.',
+        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+        read: false
+      }
+    ];
+
     dispatch({ type: 'LOAD_STATE', payload: {
       users: sampleUsers,
       businessProfiles: sampleProfiles,
       products: sampleProducts,
-      messages: [],
+      messages: sampleMessages,
       adSlots: sampleAds,
       currentUser: null
     }});

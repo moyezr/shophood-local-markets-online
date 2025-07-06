@@ -60,6 +60,8 @@ export interface SearchFilters {
   category: string;
   priceRange: [number, number];
   minRating: number;
+  userLocation?: { lat: number; lng: number };
+  useGpsLocation?: boolean;
 }
 
 export interface AppState {

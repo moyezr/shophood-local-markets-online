@@ -18,7 +18,8 @@ import {
   Phone,
   Mail,
   ExternalLink,
-  Crown
+  Crown,
+  Navigation
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,6 +55,57 @@ export function ConsumerHome() {
     minRating: 0
   });
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessProfile | null>(null);
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
+
+  const handleGetLocation = async () => {
+    setIsRequestingLocation(true);
+    
+    // Simulate GPS location request
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
+      
+      // Spoof location with random coordinates near the business locations
+      const spoofedLocations = [
+        { lat: 40.7128, lng: -74.0060, name: 'Downtown District' },
+        { lat: 40.7589, lng: -73.9851, name: 'Tech Quarter' },
+        { lat: 40.7505, lng: -73.9934, name: 'Shopping Center' },
+        { lat: 40.7355, lng: -74.0010, name: 'Historic District' }
+      ];
+      
+      const randomLocation = spoofedLocations[Math.floor(Math.random() * spoofedLocations.length)];
+      
+      setFilters(prev => ({ 
+        ...prev, 
+        userLocation: randomLocation,
+        useGpsLocation: true,
+        location: randomLocation.name
+      }));
+      
+      toast({
+        title: 'Location found!',
+        description: `Using your current location in ${randomLocation.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Location access denied',
+        description: 'Please select a location manually.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsRequestingLocation(false);
+    }
+  };
+
+  const calculateDistance = (coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+    const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
 
   const filteredResults = useMemo(() => {
     let products = state.products.filter(product => product.availability);
@@ -82,11 +134,22 @@ export function ConsumerHome() {
       return acc;
     }, {} as Record<string, BusinessProfile>);
 
-    // Filter by location (simplified - in real app would use geolocation)
-    products = products.filter(product => {
-      const business = businessProfiles[product.businessId];
-      return business && business.location === filters.location;
-    });
+    // Filter by location - use GPS if available, otherwise use selected location
+    if (filters.useGpsLocation && filters.userLocation) {
+      // GPS-based filtering by radius
+      products = products.filter(product => {
+        const business = businessProfiles[product.businessId];
+        if (!business) return false;
+        const distance = calculateDistance(filters.userLocation!, business.coordinates);
+        return distance <= filters.radius;
+      });
+    } else {
+      // Traditional location filtering
+      products = products.filter(product => {
+        const business = businessProfiles[product.businessId];
+        return business && business.location === filters.location;
+      });
+    }
 
     // Filter by minimum rating
     products = products.filter(product => {
@@ -160,22 +223,40 @@ export function ConsumerHome() {
             </div>
             <div className="flex-1">
               <Label>Location</Label>
-              <Select value={filters.location} onValueChange={(value) => 
-                setFilters(prev => ({ ...prev, location: value }))
-              }>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCATIONS.map(location => (
-                    <SelectItem key={location} value={location}>{location}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2 mt-1">
+                <Select 
+                  value={filters.location} 
+                  onValueChange={(value) => 
+                    setFilters(prev => ({ ...prev, location: value, useGpsLocation: false }))
+                  }
+                  disabled={filters.useGpsLocation}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCATIONS.map(location => (
+                      <SelectItem key={location} value={location}>{location}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant={filters.useGpsLocation ? "default" : "outline"}
+                  onClick={handleGetLocation}
+                  disabled={isRequestingLocation}
+                  className="px-3"
+                >
+                  <Navigation className={`h-4 w-4 ${isRequestingLocation ? 'animate-pulse' : ''}`} />
+                </Button>
+              </div>
+              {filters.useGpsLocation && (
+                <p className="text-xs text-green-600 mt-1">Using your current location</p>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Category</Label>
               <Select value={filters.category} onValueChange={(value) =>
@@ -190,6 +271,22 @@ export function ConsumerHome() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label>Search Radius: {filters.radius} km</Label>
+              <Slider
+                value={[filters.radius]}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, radius: value[0] }))}
+                max={50}
+                min={1}
+                step={1}
+                className="mt-2"
+                disabled={!filters.useGpsLocation}
+              />
+              {!filters.useGpsLocation && (
+                <p className="text-xs text-gray-500 mt-1">Enable GPS to use radius filtering</p>
+              )}
             </div>
             
             <div>
